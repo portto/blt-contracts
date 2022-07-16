@@ -155,6 +155,26 @@ pub contract BloctoDAO {
       self.voided = false
     }
 
+    // binary search
+    pub fun weighted (stake: UFix64): UFix64 {
+      if stake <= 1.0 {
+        return 0.0
+      }
+
+      // ~ sqrt(500000000)
+      var upper = 22361.0
+      var lower = 1.0
+      while upper - lower > 0.00000001 {
+        let mid = (lower + upper) / 2.0
+        if mid * mid > stake {
+          upper = mid
+        } else {
+          lower = mid
+        }
+      }
+      return lower
+    }
+
     pub fun update(title: String?, description: String?, startAt: UFix64?, endAt: UFix64?, voided: Bool?) {
       pre {
         title?.length ?? 0 <= 1000: "Title too long"
@@ -205,7 +225,7 @@ pub contract BloctoDAO {
         let address = votedList[self.countIndex]
         let voterStaked = BloctoDAO.getStakedBLT(address: address)
         let votedOptionIndex = BloctoDAO.votedRecords[self.id][address]!
-        self.votesCountActual[votedOptionIndex] = self.votesCountActual[votedOptionIndex] + voterStaked
+        self.votesCountActual[votedOptionIndex] = self.votesCountActual[votedOptionIndex] + self.weighted(stake: voterStaked)
 
         self.countIndex = self.countIndex + 1
       }
